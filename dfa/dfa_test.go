@@ -1,9 +1,11 @@
-package dfa
+package dfa_test
 
 import (
 	"fmt"
 	"testing"
 	"testing/quick"
+
+	"github.com/spencer-p/language-recognizers/dfa"
 )
 
 // intToBinaryString generates strings of 0*1* from integers. Useful for testing
