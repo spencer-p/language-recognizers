@@ -136,3 +136,58 @@ func TestNo1PairsWithOddLengthBetween(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestDivisibleByN(t *testing.T) {
+	// Directly compute divisibility
+	direct := func(s uint16, n uint8) bool {
+		return s%uint16(n) == 0
+	}
+
+	// A DFA that accepts a string of a binary number that is divisible by n.
+	makeTransition := func(n int) func(int, byte) int {
+		return func(q int, a byte) int {
+			// Being in state q for this DFA means that the number we've seen so
+			// far has the property i%n == q.
+			switch a {
+			case '0':
+				// Adding a 0 to the end of the string effectively multiplies
+				// everything before it by 2 (left shift 1). Then the new number
+				// is divisible by 2 and q, or 2*k. Then we take it modulo n
+				// since we're ultimately trying to divide by n.
+				return (2 * q) % n
+			case '1':
+				// Similarly, adding a 1 is like multiplying by two (left shift
+				// 1) and then adding 1. The transition then follows.
+				return (2*q + 1) % n
+			default:
+				return 0
+			}
+		}
+	}
+	accept := map[int]bool{0: true}
+
+	// Func for the quick check
+	f := func(i uint16, n uint8) bool {
+		if n == 0 {
+			// If n is 0, the function is not defined - skip it
+			return true
+		}
+
+		s := intToBinaryString(i)
+		return direct(i, n) == dfa.Recognize(0, makeTransition(int(n)), accept, s)
+	}
+
+	// Check for low values of n
+	for n := uint8(1); n <= 5; n++ {
+		for i := uint16(0); i <= 10; i++ {
+			if !f(i, n) {
+				t.Error("Failed on input i =", i, "and n =", n)
+			}
+		}
+	}
+
+	// Quick check
+	if err := quick.Check(f, nil); err != nil {
+		t.Error(err)
+	}
+}
